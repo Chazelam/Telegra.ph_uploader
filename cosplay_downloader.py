@@ -20,10 +20,10 @@ headers = {
 def download(url: str, folder: str, name = "img"):
     response = requests.get(url, headers=headers, stream=True)
     if response.status_code == 200:
-        if not os.path.exists(folder):
-            os.makedirs(folder)
+        if not os.path.exists(f"downloads/{folder}"):
+            os.makedirs(f"downloads/{folder}")
 
-        with open(f"{folder}/{name}", 'wb') as out_file:
+        with open(f"downloads/{folder}/{name}", 'wb') as out_file:
             shutil.copyfileobj(response.raw, out_file)
         del response
         print(f"File {name} downladed")
@@ -36,7 +36,7 @@ def download(url: str, folder: str, name = "img"):
 def findlink(cosplay:str):
     response = requests.get(cosplay, headers=headers)
     soup = BeautifulSoup(response.text, "html.parser")
-    title = str(soup.title)[7:].replace("Story Viewer - Hentai Cosplay</title>", "")
+    title = str(soup.title)[7:].replace("Story Viewer", "").replace("- Hentai Cosplay</title>", "")
     item = soup.find('meta', property = "og:image")
     temp  = re.search(r'(https?://\S+)', str(item)).group(0)
     temp = temp[:-1]
@@ -48,17 +48,20 @@ def findlink(cosplay:str):
 
 
 def download_cosplay(cosplay_link:str):
-    name, pattern = findlink(cosplay.replace("image", "story"))
+    name, pattern = findlink(cosplay_link.replace("image", "story"))
     print(name, pattern, sep="\n")
-
+    folder_name = name.strip().replace("-", "").replace("–", "").replace("*", "").replace("|", "").replace("\\", "").replace("/", "").replace("?", "").replace(":", "").replace("<", "").replace(">", "").replace("  ", " ")#<>:"/\|?*
     i = 1
     while 1:
-        if download(pattern.format(number = i), name.strip(), f"{i}{pattern[-4:]}"):
+        if download(pattern.format(number = i), folder_name, f"{i}{pattern[-4:]}"):
             i+=1
         else:
             break
-
+    
+    return folder_name
 
 if __name__ == "__main__":
     cosplay = 'https://ru.hentai-cosplays.com/image/kuukow-nahida-selfies-1'
     download_cosplay(cosplay)
+    # pattern = "http://static13.hentai-cosplays.com/upload/20231206/360/367889/{number}.jpg"
+    
